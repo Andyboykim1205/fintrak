@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fintrak — Personal Finance Tracker</title>
+  <meta name="description" content="Track your money, crush your budget, and build wealth — all in one beautifully simple app." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ LANDING PAGE ══ -->
+<div id="landing-page" class="page active">
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-logo">Fintrak<span class="dot">.</span></div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <button class="btn-nav" onclick="showApp()">Get Started Free</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">✦ No signup required</div>
+    <h1 class="hero-title">Know exactly<br /><em>where your money goes.</em></h1>
+    <p class="hero-sub">Fintrak gives you a brutally honest picture of your finances — budget tracking, spending insights, and category breakdowns in one clean dashboard.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showApp()">Start Tracking Free →</button>
+      <span class="hero-note">Works in your browser. No account needed.</span>
+    </div>
+    <div class="hero-preview">
+      <div class="preview-card">
+        <div class="preview-label">Monthly Budget</div>
+        <div class="preview-amount">$3,000</div>
+        <div class="preview-bar"><div class="preview-bar-fill" style="width:62%"></div></div>
+        <div class="preview-stats">
+          <span class="green">↑ $1,840 income</span>
+          <span class="orange">↓ $1,160 spent</span>
+        </div>
+      </div>
+      <div class="preview-cats">
+        <div class="preview-cat"><span>🍔</span><span>Food</span><span>$320</span></div>
+        <div class="preview-cat"><span>🏠</span><span>Housing</span><span>$900</span></div>
+        <div class="preview-cat"><span>🚗</span><span>Transport</span><span>$140</span></div>
+        <div class="preview-cat"><span>🎬</span><span>Entertainment</span><span>$60</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="section-label">✦ Features</div>
+    <h2 class="section-title">Everything you need,<br/>nothing you don't.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Real-time Dashboard</h3>
+        <p>See your income, expenses, and balance update instantly as you add transactions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗂️</div>
+        <h3>Smart Categories</h3>
+        <p>8 built-in categories with visual breakdowns so you know exactly where it's going.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Persistent Storage</h3>
+        <p>Your data lives in your browser. No servers, no accounts, no subscriptions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Transaction History</h3>
+        <p>Full log of every transaction with filtering by category and easy deletion.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Budget Goals</h3>
+        <p>Set your monthly budget and watch the progress bar tell you how you're doing.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <h3>CSV Export</h3>
+        <p>Export all your transactions as a CSV to use in Excel, Sheets, or anywhere else.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="section-label">✦ Pricing</div>
+    <h2 class="section-title">Simple, honest pricing.</h2>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-tier">Free</div>
+        <div class="pricing-price">$0<span>/mo</span></div>
+        <ul class="pricing-list">
+          <li>✓ Unlimited transactions</li>
+          <li>✓ All 8 categories</li>
+          <li>✓ Dashboard & history</li>
+          <li>✓ Budget goal tracking</li>
+          <li>✓ CSV export</li>
+          <li>✓ Local data storage</li>
+        </ul>
+        <button class="btn-primary" onclick="showApp()">Get Started →</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Coming Soon</div>
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">$5<span>/mo</span></div>
+        <ul class="pricing-list">
+          <li>✓ Everything in Free</li>
+          <li>✓ Cloud sync across devices</li>
+          <li>✓ Multiple budget profiles</li>
+          <li>✓ Monthly reports & insights</li>
+          <li>✓ Recurring transactions</li>
+          <li>✓ Priority support</li>
+        </ul>
+        <button class="btn-outline" disabled>Notify Me</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-logo">Fintrak<span class="dot">.</span></div>
+    <p>Built for people who care about where their money goes.</p>
+    <div class="footer-links">
+      <a href="#" onclick="showApp()">Open App</a>
+      <a href="https://github.com" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-copy">© 2026 Fintrak. All rights reserved.</div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════ APP PAGE ══════ -->
+<div id="app-page" class="page">
+
+  <!-- App Header -->
+  <header class="app-header">
+    <button class="back-btn" onclick="showLanding()">← Fintrak</button>
+    <div class="app-title">Dashboard</div>
+    <button class="export-btn" onclick="exportCSV()" title="Export CSV">⬇ Export</button>
+  </header>
+
+  <!-- Budget Bar -->
+  <div class="budget-section">
+    <div class="budget-row">
+      <div>
+        <div class="budget-label">Monthly Budget</div>
+        <div class="budget-amount" id="budget-display" onclick="editBudget()">$3,000 <span class="edit-hint">✎</span></div>
+      </div>
+      <div class="balance-block">
+        <div class="budget-label">Balance</div>
+        <div class="balance-amount" id="balance-display">$0.00</div>
+      </div>
+    </div>
+    <div class="budget-bar-wrap">
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill" id="budget-bar"></div>
+      </div>
+      <div class="budget-bar-meta">
+        <span id="spent-label">Spent $0</span>
+        <span id="pct-label">0% used</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Nav -->
+  <div class="app-nav">
+    <button class="app-nav-btn active" data-tab="overview" onclick="switchTab('overview', this)">Overview</button>
+    <button class="app-nav-btn" data-tab="add" onclick="switchTab('add', this)">+ Add</button>
+    <button class="app-nav-btn" data-tab="history" onclick="switchTab('history', this)">History</button>
+    <button class="app-nav-btn" data-tab="investments" onclick="switchTab('investments', this)">Invest</button>
+  </div>
+
+  <!-- Tab: Overview -->
+  <div class="tab-content active" id="tab-overview">
+    <div class="summary-cards">
+      <div class="summary-card income">
+        <div class="summary-card-label">Income</div>
+        <div class="summary-card-amount" id="total-income">$0.00</div>
+      </div>
+      <div class="summary-card expense">
+        <div class="summary-card-label">Expenses</div>
+        <div class="summary-card-amount" id="total-expenses">$0.00</div>
+      </div>
+    </div>
+
+    <div class="section-heading">Spending by Category</div>
+    <div id="category-breakdown" class="category-list">
+      <div class="empty-state">No expenses yet.<br/><span>Tap "+ Add" to log your first transaction.</span></div>
+    </div>
+
+    <div class="section-heading">Recent Transactions</div>
+    <div id="recent-list" class="transaction-list">
+      <div class="empty-state">Nothing here yet.</div>
+    </div>
+    <button class="view-all-btn" onclick="switchTab('history', document.querySelector('[data-tab=history]'))">View all transactions →</button>
+  </div>
+
+  <!-- Tab: Add -->
+  <div class="tab-content" id="tab-add">
+    <div class="form-section">
+      <div class="type-toggle">
+        <button class="type-btn active" id="type-expense" onclick="setType('expense')">Expense</button>
+        <button class="type-btn" id="type-income" onclick="setType('income')">Income</button>
+      </div>
+
+      <label class="field-label">Description</label>
+      <input class="field-input" id="desc-input" type="text" placeholder="e.g. Groceries at Metro" />
+
+      <label class="field-label">Amount (CAD)</label>
+      <input class="field-input" id="amount-input" type="number" placeholder="0.00" step="0.01" min="0" />
+
+      <label class="field-label">Date</label>
+      <input class="field-input" id="date-input" type="date" />
+
+      <div id="category-picker" class="category-picker">
+        <label class="field-label">Category</label>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+
+      <button class="btn-submit" onclick="addTransaction()">Add Transaction</button>
+    </div>
+  </div>
+
+  <!-- Tab: History -->
+  <div class="tab-content" id="tab-history">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div id="history-list" class="transaction-list"></div>
+  </div>
+
+  <!-- Tab: Investments -->
+  <div class="tab-content" id="tab-investments">
+
+    <!-- Portfolio Summary -->
+    <div class="inv-summary-grid">
+      <div class="inv-summary-card">
+        <div class="inv-summary-label">Total Invested</div>
+        <div class="inv-summary-amount" id="inv-total-invested">$0.00</div>
+      </div>
+      <div class="inv-summary-card">
+        <div class="inv-summary-label">Current Value</div>
+        <div class="inv-summary-amount" id="inv-current-value">$0.00</div>
+      </div>
+      <div class="inv-summary-card gain">
+        <div class="inv-summary-label">Total Gain / Loss</div>
+        <div class="inv-summary-amount" id="inv-gain-loss">$0.00</div>
+      </div>
+    </div>
+
+    <!-- Account Breakdown -->
+    <div class="inv-section-heading">By Account</div>
+    <div id="inv-accounts-list" class="inv-accounts-list">
+      <div class="empty-state">No investments yet.<br/><span>Add your first trade below.</span></div>
+    </div>
+
+    <!-- Holdings -->
+    <div class="inv-section-heading" style="margin-top:24px">Holdings</div>
+    <div id="inv-holdings-list" class="inv-holdings-list"></div>
+
+    <!-- Add Trade Button -->
+    <button class="btn-add-trade" onclick="openTradeModal()">+ Log a Trade</button>
+
+    <!-- Trade History -->
+    <div class="inv-section-heading" style="margin-top:28px">Trade History</div>
+    <div id="inv-trade-history" class="transaction-list"></div>
+
+  </div>
+
+</div>
+
+<!-- Budget Edit Modal -->
+<div id="budget-modal" class="modal-overlay" onclick="closeBudgetModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Set Monthly Budget</h3>
+    <input class="field-input" id="budget-input" type="number" placeholder="3000" step="100" min="0" />
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeBudgetModal()">Cancel</button>
+      <button class="btn-primary small" onclick="saveBudget()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trade Modal -->
+<div id="trade-modal" class="modal-overlay" onclick="closeTradeModal()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3>Log a Trade</h3>
+
+    <!-- Trade type -->
+    <div class="type-toggle" style="margin-bottom:20px">
+      <button class="type-btn active" id="trade-type-buy" onclick="setTradeType('buy')">Buy</button>
+      <button class="type-btn" id="trade-type-sell" onclick="setTradeType('sell')">Sell</button>
+    </div>
+
+    <label class="field-label">Asset Type</label>
+    <div class="cat-grid" id="asset-type-grid"></div>
+
+    <label class="field-label">Account</label>
+    <div class="cat-grid" id="account-grid"></div>
+
+    <label class="field-label">Symbol / Name</label>
+    <input class="field-input" id="trade-symbol" type="text" placeholder="e.g. XEQT, BTC, Apple" />
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label class="field-label">Shares / Units</label>
+        <input class="field-input" id="trade-shares" type="number" placeholder="0" step="0.0001" min="0" />
+      </div>
+      <div>
+        <label class="field-label">Price per unit (CAD)</label>
+        <input class="field-input" id="trade-price" type="number" placeholder="0.00" step="0.01" min="0" />
+      </div>
+    </div>
+
+    <label class="field-label">Date</label>
+    <input class="field-input" id="trade-date" type="date" />
+
+    <label class="field-label">Notes (optional)</label>
+    <input class="field-input" id="trade-notes" type="text" placeholder="e.g. Monthly DCA" />
+
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeTradeModal()">Cancel</button>
+      <button class="btn-primary small" onclick="addTrade()">Save Trade</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Value Modal -->
+<div id="value-modal" class="modal-overlay" onclick="closeValueModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Update Current Value</h3>
+    <p style="font-size:13px;color:var(--text-mid);margin-bottom:16px">Enter today's market value for <strong id="value-modal-symbol"></strong></p>
+    <label class="field-label">Current price per unit (CAD)</label>
+    <input class="field-input" id="value-input" type="number" placeholder="0.00" step="0.01" min="0" />
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeValueModal()">Cancel</button>
+      <button class="btn-primary small" onclick="saveCurrentValue()">Update</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/investments.js"></script>
+</body>
+</html>
