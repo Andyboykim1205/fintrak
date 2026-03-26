@@ -369,10 +369,10 @@ let pendingTrades = [];
 
 const BROKER_INSTRUCTIONS = {
   wealthsimple: `<strong>How to export from Wealthsimple:</strong><br>
-    1. Open Wealthsimple → click your account<br>
-    2. Go to <strong>Activity</strong> tab<br>
-    3. Click <strong>Download</strong> (top right) → choose <strong>CSV</strong><br>
-    4. Upload the downloaded file here`,
+    1. Go to <strong>wealthsimple.com</strong> → log in<br>
+    2. Click your account → go to <strong>Activity</strong> tab<br>
+    3. Click <strong>Download CSV</strong> (top right corner)<br>
+    4. Upload the file here — deposits & dividends are skipped automatically`,
 
   questrade: `<strong>How to export from Questrade:</strong><br>
     1. Log in to Questrade → go to <strong>Reports</strong><br>
@@ -488,30 +488,65 @@ function parseCSV(text) {
 }
 
 function parseWealthsimple(headers, rows) {
-  // Wealthsimple columns: Date, Type, Symbol, Description, Quantity, Price, Amount, Currency
-  const col = h => headers.indexOf(h);
+  // Actual Wealthsimple columns (as of 2026):
+  // transaction_date, settlement_date, account_id, account_type, activity_type,
+  // activity_sub_type, direction, symbol, name, currency, quantity, unit_price,
+  // commission, net_cash_amount
+  const col = h => {
+    // exact match first, then partial
+    let idx = headers.indexOf(h);
+    if (idx === -1) idx = headers.findIndex(hh => hh.includes(h));
+    return idx;
+  };
+
   return rows.map((row, i) => {
     try {
       const cells = parseCSVLine(row);
-      const type = (cells[col("type")] || cells[col("activity type")] || "").toLowerCase().trim();
-      const symbol = (cells[col("symbol")] || cells[col("ticker")] || "").trim().toUpperCase();
-      const qty  = parseFloat(cells[col("quantity")] || cells[col("units")] || 0);
-      const price = parseFloat((cells[col("price")] || "0").replace(/[$,]/g,""));
-      const dateRaw = cells[col("date")] || cells[col("transaction date")] || "";
-      const date = normalizeDate(dateRaw);
 
-      if (!symbol || !date || isNaN(qty) || qty <= 0) return { error: true, row: i+2, reason: "Missing data" };
+      const activityType    = (cells[col("activity_type")]     || cells[col("activity type")] || "").toLowerCase().trim();
+      const activitySubType = (cells[col("activity_sub_type")] || cells[col("activity sub type")] || "").toLowerCase().trim();
+      const direction       = (cells[col("direction")]         || "").toLowerCase().trim();
+      const symbol          = (cells[col("symbol")]            || "").trim().toUpperCase();
+      const qty             = parseFloat(cells[col("quantity")]   || 0);
+      const price           = parseFloat((cells[col("unit_price")] || cells[col("price")] || "0").replace(/[$,]/g,""));
+      const dateRaw         = cells[col("transaction_date")]   || cells[col("transaction date")] || cells[col("date")] || "";
+      const date            = normalizeDate(dateRaw);
 
-      const tradeType = type.includes("buy") || type.includes("purchase") ? "buy"
-                      : type.includes("sell") ? "sell" : null;
-      if (!tradeType) return null; // skip dividends, deposits etc
+      // Skip non-trade rows: deposits, withdrawals, dividends, fees etc.
+      // We only want rows where activity_type is "Trade" or "Buy"/"Sell"
+      const isTrade = activityType === "trade"
+        || activityType === "buy"
+        || activityType === "sell"
+        || activitySubType === "buy"
+        || activitySubType === "sell"
+        || direction === "buy"
+        || direction === "sell";
+
+      if (!isTrade) return null; // skip MoneyMovement, Dividend, etc.
+      if (!symbol)  return null; // skip rows with no symbol
+      if (!date || isNaN(qty) || qty <= 0) return { error: true, row: i+2, reason: "Missing date or quantity" };
+
+      // Determine buy vs sell
+      let tradeType = "buy";
+      if (direction === "sell" || activityType === "sell" || activitySubType === "sell") {
+        tradeType = "sell";
+      } else if (direction === "buy" || activityType === "buy" || activitySubType === "buy") {
+        tradeType = "buy";
+      }
+
+      // Use unit_price; if missing, derive from net_cash_amount / quantity
+      let unitPrice = price;
+      if (isNaN(unitPrice) || unitPrice === 0) {
+        const netCash = parseFloat((cells[col("net_cash_amount")] || "0").replace(/[$,]/g,""));
+        unitPrice = qty > 0 ? Math.abs(netCash) / qty : 0;
+      }
 
       return {
         id: Date.now() + Math.random(),
         tradeType,
         symbol,
         shares: Math.abs(qty),
-        price: isNaN(price) || price === 0 ? Math.abs(parseFloat((cells[col("amount")] || "0").replace(/[$,]/g,""))) / Math.abs(qty) : price,
+        price: Math.abs(unitPrice),
         date,
         account: importAccount,
         assetType: detectAssetType(symbol),
