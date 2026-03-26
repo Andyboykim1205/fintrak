@@ -1131,3 +1131,98 @@ a { color: inherit; text-decoration: none; }
 .modal-lg .field-input { margin-bottom: 16px; }
 
 /* Asset type + account chips reuse cat-chip styles */
+
+/* ── CSV Import ── */
+.inv-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0 0;
+}
+
+.btn-import-csv {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-mid);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-import-csv:hover { border-color: var(--text-mid); color: var(--text); }
+
+.import-instructions {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.import-instructions strong { color: var(--text); }
+
+.csv-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 16px;
+}
+
+.csv-dropzone:hover, .csv-dropzone.drag-over {
+  border-color: var(--text-mid);
+  background: var(--bg3);
+}
+
+.csv-dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+
+.csv-dropzone-text {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.csv-dropzone-sub { font-size: 12px; color: var(--text-muted); }
+
+.import-preview-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.import-preview-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.import-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--bg3);
+  font-size: 13px;
+  gap: 8px;
+}
+
+.import-preview-row:last-child { border-bottom: none; }
+.import-preview-row.error { color: var(--red); opacity: 0.7; }
+
+.import-preview-symbol { font-weight: 500; min-width: 60px; }
+.import-preview-meta { color: var(--text-muted); font-size: 11px; flex: 1; }
+.import-preview-amount { white-space: nowrap; }

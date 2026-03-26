@@ -358,3 +358,336 @@ function saveCurrentValue() {
 
   renderInvestments();
 })();
+
+// ══════════════════════════════════════════════════
+// CSV IMPORT
+// ══════════════════════════════════════════════════
+
+let importBroker = "wealthsimple";
+let importAccount = "TFSA";
+let pendingTrades = [];
+
+const BROKER_INSTRUCTIONS = {
+  wealthsimple: `<strong>How to export from Wealthsimple:</strong><br>
+    1. Open Wealthsimple → click your account<br>
+    2. Go to <strong>Activity</strong> tab<br>
+    3. Click <strong>Download</strong> (top right) → choose <strong>CSV</strong><br>
+    4. Upload the downloaded file here`,
+
+  questrade: `<strong>How to export from Questrade:</strong><br>
+    1. Log in to Questrade → go to <strong>Reports</strong><br>
+    2. Select <strong>Order History</strong> or <strong>Trade Confirmation</strong><br>
+    3. Set your date range → click <strong>Export to CSV</strong><br>
+    4. Upload the downloaded file here`,
+
+  generic: `<strong>Generic CSV format — your file needs these columns:</strong><br>
+    <strong>Date, Symbol, Type (buy/sell), Quantity, Price</strong><br>
+    Column names are flexible — we'll try to detect them automatically.`
+};
+
+function openImportModal() {
+  pendingTrades = [];
+  importBroker = "wealthsimple";
+  importAccount = "TFSA";
+  document.getElementById("csv-file-input").value = "";
+  document.getElementById("import-preview").style.display = "none";
+  document.getElementById("import-confirm-btn").style.display = "none";
+  document.getElementById("csv-dropzone").querySelector(".csv-dropzone-text").textContent = "Click to choose CSV file";
+  buildImportAccountGrid();
+  setBroker("wealthsimple");
+  document.getElementById("import-modal").classList.add("open");
+  setupDropZone();
+}
+
+function closeImportModal() {
+  document.getElementById("import-modal").classList.remove("open");
+}
+
+function setBroker(broker) {
+  importBroker = broker;
+  ["wealthsimple","questrade","generic"].forEach(b => {
+    const btn = document.getElementById("broker-" + (b === "wealthsimple" ? "ws" : b === "questrade" ? "qt" : "generic"));
+    btn.classList.toggle("active", b === broker);
+    btn.style.background = b === broker ? "var(--text)" : "";
+    btn.style.color = b === broker ? "var(--bg)" : "";
+  });
+  document.getElementById("import-instructions").innerHTML = BROKER_INSTRUCTIONS[broker];
+  // reset preview if broker changes
+  pendingTrades = [];
+  document.getElementById("import-preview").style.display = "none";
+  document.getElementById("import-confirm-btn").style.display = "none";
+}
+
+function buildImportAccountGrid() {
+  const grid = document.getElementById("import-account-grid");
+  grid.innerHTML = "";
+  ACCOUNTS.forEach(acc => {
+    const col = ACCOUNT_COLORS[acc] || ACCOUNT_COLORS.Cash;
+    const btn = document.createElement("button");
+    btn.className = "cat-chip" + (acc === importAccount ? " selected" : "");
+    btn.textContent = acc;
+    if (acc === importAccount) {
+      btn.style.borderColor = col.border;
+      btn.style.color = col.text;
+      btn.style.background = col.bg;
+    }
+    btn.onclick = () => { importAccount = acc; buildImportAccountGrid(); };
+    grid.appendChild(btn);
+  });
+  grid.style.marginBottom = "20px";
+}
+
+function setupDropZone() {
+  const zone = document.getElementById("csv-dropzone");
+  zone.ondragover = e => { e.preventDefault(); zone.classList.add("drag-over"); };
+  zone.ondragleave = () => zone.classList.remove("drag-over");
+  zone.ondrop = e => {
+    e.preventDefault();
+    zone.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file) handleCSVFile(file);
+  };
+}
+
+function handleCSVFile(file) {
+  if (!file || !file.name.endsWith(".csv")) {
+    alert("Please upload a .csv file.");
+    return;
+  }
+  document.getElementById("csv-dropzone").querySelector(".csv-dropzone-text").textContent = "✓ " + file.name;
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result);
+  reader.readAsText(file);
+}
+
+// ── CSV Parsers ────────────────────────────────────
+
+function parseCSV(text) {
+  const lines = text.trim().split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) { showImportError("File appears to be empty."); return; }
+
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim().replace(/['"]/g, ""));
+
+  let parsed = [];
+  let errors = 0;
+
+  if (importBroker === "wealthsimple") {
+    parsed = parseWealthsimple(headers, lines.slice(1));
+  } else if (importBroker === "questrade") {
+    parsed = parseQuestrade(headers, lines.slice(1));
+  } else {
+    parsed = parseGeneric(headers, lines.slice(1));
+  }
+
+  // Filter out failed rows
+  const valid   = parsed.filter(t => t && !t.error);
+  const invalid = parsed.filter(t => t && t.error);
+
+  pendingTrades = valid;
+  showImportPreview(valid, invalid);
+}
+
+function parseWealthsimple(headers, rows) {
+  // Wealthsimple columns: Date, Type, Symbol, Description, Quantity, Price, Amount, Currency
+  const col = h => headers.indexOf(h);
+  return rows.map((row, i) => {
+    try {
+      const cells = parseCSVLine(row);
+      const type = (cells[col("type")] || cells[col("activity type")] || "").toLowerCase().trim();
+      const symbol = (cells[col("symbol")] || cells[col("ticker")] || "").trim().toUpperCase();
+      const qty  = parseFloat(cells[col("quantity")] || cells[col("units")] || 0);
+      const price = parseFloat((cells[col("price")] || "0").replace(/[$,]/g,""));
+      const dateRaw = cells[col("date")] || cells[col("transaction date")] || "";
+      const date = normalizeDate(dateRaw);
+
+      if (!symbol || !date || isNaN(qty) || qty <= 0) return { error: true, row: i+2, reason: "Missing data" };
+
+      const tradeType = type.includes("buy") || type.includes("purchase") ? "buy"
+                      : type.includes("sell") ? "sell" : null;
+      if (!tradeType) return null; // skip dividends, deposits etc
+
+      return {
+        id: Date.now() + Math.random(),
+        tradeType,
+        symbol,
+        shares: Math.abs(qty),
+        price: isNaN(price) || price === 0 ? Math.abs(parseFloat((cells[col("amount")] || "0").replace(/[$,]/g,""))) / Math.abs(qty) : price,
+        date,
+        account: importAccount,
+        assetType: detectAssetType(symbol),
+        notes: "Imported from Wealthsimple"
+      };
+    } catch(e) { return { error: true, row: i+2, reason: e.message }; }
+  }).filter(Boolean);
+}
+
+function parseQuestrade(headers, rows) {
+  // Questrade columns: Transaction Date, Settlement Date, Action, Symbol, Description, Quantity, Price, Gross Amount, Commission, Net Amount, Currency, Account #
+  const col = h => {
+    const idx = headers.findIndex(hh => hh.includes(h));
+    return idx;
+  };
+  return rows.map((row, i) => {
+    try {
+      const cells = parseCSVLine(row);
+      const action = (cells[col("action")] || "").toLowerCase().trim();
+      const symbol = (cells[col("symbol")] || "").trim().toUpperCase();
+      const qty    = parseFloat(cells[col("quantity")] || 0);
+      const price  = parseFloat((cells[col("price")] || "0").replace(/[$,]/g,""));
+      const dateRaw = cells[col("transaction date")] || cells[col("date")] || "";
+      const date   = normalizeDate(dateRaw);
+
+      if (!symbol || !date || isNaN(qty) || qty <= 0) return { error: true, row: i+2, reason: "Missing data" };
+
+      const tradeType = action === "buy" ? "buy" : action === "sell" ? "sell" : null;
+      if (!tradeType) return null;
+
+      return {
+        id: Date.now() + Math.random(),
+        tradeType,
+        symbol,
+        shares: Math.abs(qty),
+        price: Math.abs(price),
+        date,
+        account: importAccount,
+        assetType: detectAssetType(symbol),
+        notes: "Imported from Questrade"
+      };
+    } catch(e) { return { error: true, row: i+2, reason: e.message }; }
+  }).filter(Boolean);
+}
+
+function parseGeneric(headers, rows) {
+  // Try to auto-detect columns
+  const find = (...names) => {
+    for (const n of names) {
+      const idx = headers.findIndex(h => h.includes(n));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const dateCol   = find("date","time","traded");
+  const symbolCol = find("symbol","ticker","asset","stock","coin");
+  const typeCol   = find("type","action","side","direction","activity");
+  const qtyCol    = find("quantity","qty","shares","units","amount");
+  const priceCol  = find("price","rate","cost");
+
+  return rows.map((row, i) => {
+    try {
+      const cells = parseCSVLine(row);
+      const symbol = symbolCol >= 0 ? (cells[symbolCol] || "").trim().toUpperCase() : "";
+      const type   = typeCol   >= 0 ? (cells[typeCol]   || "").toLowerCase().trim() : "";
+      const qty    = qtyCol    >= 0 ? parseFloat((cells[qtyCol]   || "0").replace(/[$,]/g,"")) : 0;
+      const price  = priceCol  >= 0 ? parseFloat((cells[priceCol] || "0").replace(/[$,]/g,"")) : 0;
+      const date   = dateCol   >= 0 ? normalizeDate(cells[dateCol] || "") : "";
+
+      if (!symbol || !date || isNaN(qty) || qty <= 0) return { error: true, row: i+2, reason: "Could not parse row" };
+
+      const tradeType = type.includes("buy") || type.includes("purchase") ? "buy"
+                      : type.includes("sell") ? "sell" : "buy"; // default to buy
+
+      return {
+        id: Date.now() + Math.random(),
+        tradeType,
+        symbol,
+        shares: Math.abs(qty),
+        price: Math.abs(price),
+        date,
+        account: importAccount,
+        assetType: detectAssetType(symbol),
+        notes: "Imported via CSV"
+      };
+    } catch(e) { return { error: true, row: i+2, reason: e.message }; }
+  }).filter(Boolean);
+}
+
+// ── Utilities ──────────────────────────────────────
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = "", inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === "," && !inQ) { result.push(cur.trim()); cur = ""; continue; }
+    cur += c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function normalizeDate(raw) {
+  if (!raw) return "";
+  raw = raw.replace(/['"]/g,"").trim();
+  // Try various formats: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, Month DD YYYY
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const mdy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (mdy) return `${mdy[3]}-${mdy[1].padStart(2,"0")}-${mdy[2].padStart(2,"0")}`;
+  const d = new Date(raw);
+  if (!isNaN(d)) return d.toISOString().slice(0,10);
+  return "";
+}
+
+function detectAssetType(symbol) {
+  const cryptoSymbols = ["BTC","ETH","SOL","XRP","ADA","DOGE","DOT","AVAX","MATIC","LINK","LTC","BCH","XLM","USDC","USDT"];
+  if (cryptoSymbols.includes(symbol)) return "Crypto";
+  if (symbol.endsWith(".TO") || symbol.includes("ETF") || ["XEQT","VEQT","XGRO","VFV","ZSP","XIU","HXT"].includes(symbol)) return "ETF";
+  return "Stock";
+}
+
+function showImportPreview(valid, invalid) {
+  const preview = document.getElementById("import-preview");
+  preview.style.display = "block";
+
+  document.getElementById("import-preview-count").textContent =
+    `${valid.length} trade${valid.length !== 1 ? "s" : ""} ready to import`;
+  document.getElementById("import-preview-errors").textContent =
+    invalid.length > 0 ? `${invalid.length} row${invalid.length !== 1 ? "s" : ""} skipped` : "";
+
+  const list = document.getElementById("import-preview-list");
+
+  if (valid.length === 0) {
+    list.innerHTML = `<div class="import-preview-row error">No valid trades found. Check that you selected the correct broker and CSV file.</div>`;
+    document.getElementById("import-confirm-btn").style.display = "none";
+    return;
+  }
+
+  list.innerHTML = valid.slice(0, 30).map(t => `
+    <div class="import-preview-row">
+      <span class="import-preview-symbol" style="color:${t.tradeType === 'buy' ? 'var(--green)' : 'var(--red)'}">${escHtml(t.tradeType.toUpperCase())} ${escHtml(t.symbol)}</span>
+      <span class="import-preview-meta">${t.shares} units · ${fmtDate(t.date)}</span>
+      <span class="import-preview-amount">${fmtCAD(t.shares * t.price)}</span>
+    </div>
+  `).join("") + (valid.length > 30 ? `<div class="import-preview-row" style="color:var(--text-muted);justify-content:center">+ ${valid.length - 30} more trades</div>` : "");
+
+  document.getElementById("import-confirm-btn").style.display = "inline-block";
+}
+
+function showImportError(msg) {
+  document.getElementById("import-preview").style.display = "block";
+  document.getElementById("import-preview-count").textContent = "Error";
+  document.getElementById("import-preview-errors").textContent = msg;
+  document.getElementById("import-preview-list").innerHTML = `<div class="import-preview-row error">${escHtml(msg)}</div>`;
+  document.getElementById("import-confirm-btn").style.display = "none";
+}
+
+function confirmImport() {
+  if (pendingTrades.length === 0) return;
+  // Avoid duplicates by checking existing trades
+  const existingKeys = new Set(trades.map(t => `${t.symbol}_${t.date}_${t.shares}_${t.tradeType}`));
+  let added = 0;
+  pendingTrades.forEach(t => {
+    const key = `${t.symbol}_${t.date}_${t.shares}_${t.tradeType}`;
+    if (!existingKeys.has(key)) {
+      trades.push({ ...t, id: Date.now() + Math.random() });
+      existingKeys.add(key);
+      added++;
+    }
+  });
+  invSave();
+  closeImportModal();
+  renderInvestments();
+  alert(`✓ Successfully imported ${added} trade${added !== 1 ? "s" : ""}!${added < pendingTrades.length ? ` (${pendingTrades.length - added} duplicates skipped)` : ""}`);
+}
