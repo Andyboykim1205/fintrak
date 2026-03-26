@@ -266,8 +266,11 @@
     <div class="inv-section-heading" style="margin-top:24px">Holdings</div>
     <div id="inv-holdings-list" class="inv-holdings-list"></div>
 
-    <!-- Add Trade Button -->
-    <button class="btn-add-trade" onclick="openTradeModal()">+ Log a Trade</button>
+    <!-- Action Buttons -->
+    <div class="inv-action-row">
+      <button class="btn-add-trade" onclick="openTradeModal()">+ Log a Trade</button>
+      <button class="btn-import-csv" onclick="openImportModal()">⬆ Import CSV</button>
+    </div>
 
     <!-- Trade History -->
     <div class="inv-section-heading" style="margin-top:28px">Trade History</div>
@@ -285,6 +288,51 @@
     <div class="modal-actions">
       <button class="btn-outline" onclick="closeBudgetModal()">Cancel</button>
       <button class="btn-primary small" onclick="saveBudget()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div id="import-modal" class="modal-overlay" onclick="closeImportModal()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3>Import from CSV</h3>
+    <p style="font-size:13px;color:var(--text-mid);margin-bottom:20px">Supports Wealthsimple and Questrade trade history exports. Your data never leaves your device.</p>
+
+    <!-- Broker selector -->
+    <label class="field-label">Broker</label>
+    <div class="type-toggle" style="margin-bottom:20px">
+      <button class="type-btn active" id="broker-ws" onclick="setBroker('wealthsimple')">Wealthsimple</button>
+      <button class="type-btn" id="broker-qt" onclick="setBroker('questrade')">Questrade</button>
+      <button class="type-btn" id="broker-generic" onclick="setBroker('generic')">Other / Generic</button>
+    </div>
+
+    <!-- Account for import -->
+    <label class="field-label">Which account is this from?</label>
+    <div class="cat-grid" id="import-account-grid"></div>
+
+    <!-- Instructions -->
+    <div class="import-instructions" id="import-instructions"></div>
+
+    <!-- File drop zone -->
+    <div class="csv-dropzone" id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()">
+      <div class="csv-dropzone-icon">📂</div>
+      <div class="csv-dropzone-text">Click to choose CSV file</div>
+      <div class="csv-dropzone-sub">or drag and drop here</div>
+      <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(this.files[0])" />
+    </div>
+
+    <!-- Preview -->
+    <div id="import-preview" style="display:none">
+      <div class="import-preview-header">
+        <span id="import-preview-count"></span>
+        <span id="import-preview-errors" style="color:var(--red)"></span>
+      </div>
+      <div id="import-preview-list" class="import-preview-list"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn-outline" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-primary small" id="import-confirm-btn" onclick="confirmImport()" style="display:none">Import Trades</button>
     </div>
   </div>
 </div>
